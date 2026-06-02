@@ -35,7 +35,7 @@ def post_login(
         input=username + " " + password,
         text=True,
     )
-    if check.returncode == 0:
+    if check.returncode != 0:
         return templates.TemplateResponse(
             request=request,
             name="login.html",
