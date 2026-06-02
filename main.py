@@ -31,7 +31,10 @@ def post_login(
         return RedirectResponse("/dashboard", status_code=300)
 
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": "wrong"}, status_code=401
+        request=request,
+        name="dashboard.html",
+        context={"error": "wrong"},
+        status_code=401,
     )
 
 
