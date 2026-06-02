@@ -1,0 +1,14 @@
+[Unit]
+Description=pam auth for web app
+After=network.target    //after basic network is up
+
+[Service]
+User=pam-auth
+Group=pam-auth
+WorkingDirectory=/home/pi/pi-web
+ExecStart=/home/pi/pi-web/.venv/bin/uvicorn --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

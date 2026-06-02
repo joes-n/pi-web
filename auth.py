@@ -1,10 +1,23 @@
+import sys
+
 import pam
 
 
-def check_pam(username: str, password: str):
-    if not username or not password:
-        return False
+def main():
+    data = sys.stdin.read().splitlines()
+
+    if len(data) != 2:
+        return 1
 
     p = pam.pam()
 
-    return p.authenticate(username, password, service="web")
+    username = data[0]
+    password = data[1]
+
+    if not p.authenticate(username, password, service="web"):
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
