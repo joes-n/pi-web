@@ -28,13 +28,10 @@ def post_login(
 ):
 
     if check_pam(username, password):
-        return RedirectResponse("/dashboard", status_code=300)
+        return RedirectResponse("/dashboard", status_code=303)
 
     return templates.TemplateResponse(
-        request=request,
-        name="dashboard.html",
-        context={"error": "wrong"},
-        status_code=401,
+        request=request, name="login.html", context={"error": "wrong"}, status_code=401
     )
 
 
