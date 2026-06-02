@@ -22,6 +22,11 @@ def login(request: Request):
     return templates.TemplateResponse(request=request, name="login.html")
 
 
+@app.get("/api/*")
+def redirect_login():
+    return RedirectResponse(url="/login")
+
+
 @app.post("/api/login")
 def post_login(
     request: Request, username: Annotated[str, Form()], password: Annotated[str, Form()]
