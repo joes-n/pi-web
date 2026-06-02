@@ -7,4 +7,4 @@ def check_pam(username: str, password: str):
 
     p = pam.pam()
 
-    return p.authenticate(username, password, service="login")
+    return p.authenticate(username, password, service="web")
