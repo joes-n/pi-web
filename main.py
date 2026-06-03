@@ -5,6 +5,7 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.status import HTTP_303_SEE_OTHER
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="hi")
@@ -43,12 +44,12 @@ def post_login(
             status_code=401,
         )
     request.session["user"] = username
-    return RedirectResponse(url="/dashboard")
+    return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
 
-@app.post("/dashboard")
+@app.get("/dashboard")
 def dashboard(request: Request):
-    username = request.session.get("username")
+    username = request.session.get("user")
     if not username:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse(request=request, name="dashboard.html")
