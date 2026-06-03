@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 mv auth.py /usr/local/libexec/
 echo "moved auth.py to /usr/local/libexec"
