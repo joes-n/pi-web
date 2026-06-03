@@ -43,6 +43,9 @@ def main():
         p.set_item(PAM.PAM_USER, username)
         p.set_item(PAM.PAM_CONV, conversation)
 
+        p.authenticate()
+        p.acct_mgmt()
+
         return 0
 
     except PAM.error or Exception:
