@@ -31,7 +31,7 @@ def post_login(
     request: Request, username: Annotated[str, Form()], password: Annotated[str, Form()]
 ):
     check = subprocess.run(
-        ["sudo", "-n", "/usr/local/libexec/auth.py"],
+        ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/auth.py"],
         input=f"{username}\n{password}\n",
         text=True,
     )
