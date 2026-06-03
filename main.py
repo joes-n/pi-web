@@ -1,8 +1,10 @@
+import json
 import subprocess
+from string import Template
 from typing import Annotated
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import HTTP_303_SEE_OTHER
@@ -10,6 +12,21 @@ from starlette.status import HTTP_303_SEE_OTHER
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="hi")
 templates = Jinja2Templates(directory="templates")
+
+
+def get_ip():
+    ip = subprocess.run(["hostname", "-I"], text=True, capture_output=True)
+    return ip.stdout
+
+
+def post_ip(payload):
+    result = subprocess.run(
+        ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/netctl.py"],
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+    )
+    return result
 
 
 @app.get("/")
@@ -20,11 +37,6 @@ def root():
 @app.get("/login")
 def login(request: Request):
     return templates.TemplateResponse(request=request, name="login.html")
-
-
-@app.get("/api/*")
-def redirect_login():
-    return RedirectResponse(url="/login")
 
 
 @app.post("/api/login")
@@ -47,9 +59,27 @@ def post_login(
     return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
 
+@app.get("/api/ip")
+def get_api_ip():
+    return JSONResponse(get_ip())
+
+
+@app.post("/api/ip")
+def post_api_ip(request: Request):
+    username = request.session.get("user")
+    if not username:
+        return RedirectResponse(url="/login", status_code=HTTP_303_SEE_OTHER)
+
+    post_ip(request)
+    return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+
 @app.get("/dashboard")
 def dashboard(request: Request):
     username = request.session.get("user")
     if not username:
         return RedirectResponse(url="/login")
-    return templates.TemplateResponse(request=request, name="dashboard.html")
+
+    return templates.TemplateResponse(
+        request=request, name="dashboard.html", context={"ip": get_ip()}
+    )

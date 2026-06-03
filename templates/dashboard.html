@@ -1,9 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
     <head>
         <title>Dashboard</title>
     </head>
     <body>
-        this is dashboard
+        Current IP: {{ ip }}
+        <br />
+        <form action="/api/ip" method="post">
+            Change IP to: <input type="text" name="new_ip" />
+            <button type="submit">Submit</button>
+        </form>
     </body>
 </html>
