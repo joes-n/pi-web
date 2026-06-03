@@ -45,6 +45,6 @@ def post_login(
     return RedirectResponse(url="/dashboard")
 
 
-@app.get("/dashboard")
+@app.post("/dashboard")
 def dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="dashboard.html")
