@@ -42,9 +42,13 @@ def post_login(
             context={"error": "wrong"},
             status_code=401,
         )
+    request.session["user"] = username
     return RedirectResponse(url="/dashboard")
 
 
 @app.post("/dashboard")
 def dashboard(request: Request):
+    username = request.session.get("username")
+    if not username:
+        return RedirectResponse(url="/login")
     return templates.TemplateResponse(request=request, name="dashboard.html")
