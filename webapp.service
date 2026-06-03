@@ -1,6 +1,6 @@
 [Unit]
 Description=web app service
-After=network.target    //after basic network is up
+After=network.target
 
 [Service]
 User=user-for-launching-web-app
