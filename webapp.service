@@ -1,5 +1,5 @@
 [Unit]
-Description=pam auth for web app
+Description=web app service
 After=network.target    //after basic network is up
 
 [Service]
