@@ -6,6 +6,12 @@ else
     echo "user webapp already exists"
 fi
 
+if ! getent group login >/dev/null 2>&1; then
+    groupadd login
+else
+    echo "user group login already exists"
+fi
+
 mv auth.py /usr/local/libexec/
 echo "moved auth.py to /usr/local/libexec"
 
@@ -21,4 +27,4 @@ echo "moved webapp (pam config file) to /etc/pam.d/"
 mv webapp.service /etc/systemd/system/
 echo "moved webapp.service to /etc/systemd/system/"
 
-echo "open port 8080:\n$(ufw status)"
+echo "open port:\n$(ufw status)"
