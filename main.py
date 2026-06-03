@@ -59,6 +59,12 @@ def post_login(
     return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
 
+@app.post("/api/logout")
+def post_logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=HTTP_303_SEE_OTHER)
+
+
 @app.get("/api/ip")
 def get_api_ip():
     return JSONResponse(get_ip())
