@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if ! id webapp >/dev/null 2>&1; then
+    useradd --system --user-group --no-create-home --shell /usr/sbin/nologin webapp
+else
+    echo "user webapp already exists"
+fi
+
 mv auth.py /usr/local/libexec/
 echo "moved auth.py to /usr/local/libexec"
 

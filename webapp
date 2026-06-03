@@ -1,7 +1,7 @@
-auth        required    pam_succedd_if.so   user    ingroup web quiet
+auth        required    pam_succeed_if.so   user    ingroup webapp quiet
 auth        include     common-auth
 
-account     required    pam_succedd_if.so   user    ingroup web quiet
+account     required    pam_succeed_if.so   user    ingroup webapp quiet
 account     include     common-account
 
 password    include     common-password

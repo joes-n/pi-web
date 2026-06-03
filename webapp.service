@@ -3,8 +3,8 @@ Description=web app service
 After=network.target
 
 [Service]
-User=user-for-launching-web-app
-Group=user-for-launching-web-app
+User=webapp
+Group=webapp
 WorkingDirectory=/home/pi/pi-web
 ExecStart=/home/pi/pi-web/.venv/bin/uvicorn --host 0.0.0.0 --port 8080
 Restart=always
