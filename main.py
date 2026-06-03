@@ -32,7 +32,7 @@ def post_login(
 ):
     check = subprocess.run(
         ["sudo", "-n", "/usr/local/libexec/auth.py"],
-        input=username + " " + password,
+        input=f"{username}\n{password}\n",
         text=True,
     )
     if check.returncode != 0:
@@ -42,6 +42,7 @@ def post_login(
             context={"error": "wrong"},
             status_code=401,
         )
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/dashboard")

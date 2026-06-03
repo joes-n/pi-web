@@ -1,0 +1,8 @@
+auth        required    pam_succedd_if.so   user    ingroup web quiet
+auth        include     common-auth
+
+account     required    pam_succedd_if.so   user    ingroup web quiet
+account     include     common-account
+
+password    include     common-password
+session     include     common-session

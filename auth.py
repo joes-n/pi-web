@@ -1,6 +1,6 @@
 import sys
 
-import pam
+import PAM  # system wide python3-pam on pi uses PAM instead of pam
 
 
 def main():
@@ -9,7 +9,7 @@ def main():
     if len(data) != 2:
         return 1
 
-    p = pam.pam()
+    p = PAM.pam()
 
     username = data[0]
     password = data[1]
