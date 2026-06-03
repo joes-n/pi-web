@@ -10,7 +10,7 @@ mv auth.py /usr/local/libexec/
 echo "moved auth.py to /usr/local/libexec"
 
 chown root:root /usr/local/libexec/auth.py
-echo "ran chmod root:root on auth.py"
+echo "ran chown root:root on auth.py"
 
 chmod 0755 /usr/local/libexec/auth.py
 echo "ran chmod 0755 on auth.py"
