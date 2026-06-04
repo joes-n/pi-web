@@ -1,10 +1,11 @@
-import json
 import ipaddress
+import json
 import subprocess
 from typing import Annotated
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.status import HTTP_303_SEE_OTHER
@@ -12,8 +13,9 @@ from starlette.status import HTTP_303_SEE_OTHER
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="hi")
 templates = Jinja2Templates(directory="templates")
-ETH_DEVICE = "eth0"
-FALLBACK_CONNECTION = "netplan-eth0"
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def run_nmcli(args: list[str], check: bool = True):
@@ -65,7 +67,7 @@ def eth_connection_name():
         fields = parse_nmcli_line(line)
         if len(fields) == 3:
             name, conn_type, device = fields
-            if conn_type == "802-3-ethernet" and device == ETH_DEVICE:
+            if conn_type == "802-3-ethernet" and device == "eth0":
                 return name
 
     all_connections = run_nmcli(
@@ -78,7 +80,6 @@ def eth_connection_name():
         ]
     ).stdout
 
-    fallback_exists = False
     ethernet_names = []
     for line in all_connections.splitlines():
         fields = parse_nmcli_line(line)
@@ -86,19 +87,16 @@ def eth_connection_name():
             continue
 
         name, conn_type, device = fields
-        if name == FALLBACK_CONNECTION:
-            fallback_exists = True
+
         if conn_type == "802-3-ethernet":
-            if device == ETH_DEVICE:
+            if device == "eth0":
                 return name
             ethernet_names.append(name)
 
-    if fallback_exists:
-        return FALLBACK_CONNECTION
     if len(ethernet_names) == 1:
         return ethernet_names[0]
 
-    raise RuntimeError(f"no NetworkManager connection profile found for {ETH_DEVICE}")
+    raise RuntimeError("no NetworkManager connection profile found for eth0")
 
 
 def get_connection_field(connection: str, field: str):
