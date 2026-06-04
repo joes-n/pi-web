@@ -58,8 +58,12 @@ echo "moved webapp-in-pam (pam config file) to /etc/pam.d/"
 
 mv webapp-in-sudoers /etc/sudoers.d/
 echo "moved webapp-in-sudoers to /etc/sudoers.d/"
+chown root:root /etc/sudoers.d/webapp-in-sudoers
+chmod 0440 /etc/sudoers.d/webapp-in-sudoers
+visudo -cf /etc/sudoers.d/webapp-in-sudoers
+echo "fixed ownership and permissions for webapp-in-sudoers"
 
 mv webapp.service /etc/systemd/system/
 echo "moved webapp.service to /etc/systemd/system/"
 
-echo "open port:\n$(ufw status)"
+echo -e "open port:\n$(ufw status)"
