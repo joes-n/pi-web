@@ -1,6 +1,7 @@
 import ipaddress
 import json
 import subprocess
+import time
 from typing import Annotated
 
 from fastapi import FastAPI, Form, Request
@@ -13,6 +14,9 @@ from starlette.status import HTTP_303_SEE_OTHER
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="hi")
 templates = Jinja2Templates(directory="templates")
+MAX_LOGIN_FAILURES = 3
+LOGIN_LOCKOUT_SECONDS = 30
+login_failures = {}
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -173,6 +177,41 @@ def change_account(payload):
     return result
 
 
+def login_key(request: Request, username: str):
+    client = request.client.host if request.client else "unknown"
+    return (client, username.strip().lower())
+
+
+def login_lockout_seconds(request: Request, username: str):
+    record = login_failures.get(login_key(request, username))
+    if not record:
+        return 0
+
+    remaining = int(record.get("locked_until", 0) - time.monotonic())
+    if remaining <= 0:
+        if record.get("locked_until"):
+            login_failures.pop(login_key(request, username), None)
+        return 0
+
+    return remaining
+
+
+def record_login_failure(request: Request, username: str):
+    key = login_key(request, username)
+    record = login_failures.get(key, {"count": 0, "locked_until": 0})
+    record["count"] += 1
+
+    if record["count"] >= MAX_LOGIN_FAILURES:
+        record["locked_until"] = time.monotonic() + LOGIN_LOCKOUT_SECONDS
+
+    login_failures[key] = record
+    return login_lockout_seconds(request, username)
+
+
+def clear_login_failures(request: Request, username: str):
+    login_failures.pop(login_key(request, username), None)
+
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/login")
@@ -187,18 +226,38 @@ def login(request: Request):
 def post_login(
     request: Request, username: Annotated[str, Form()], password: Annotated[str, Form()]
 ):
+    locked_for = login_lockout_seconds(request, username)
+    if locked_for:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"error": f"Too many failed attempts. Try again in {locked_for}s."},
+            status_code=429,
+        )
+
     check = subprocess.run(
         ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/auth.py"],
         input=f"{username}\n{password}\n",
         text=True,
     )
     if check.returncode != 0:
+        locked_for = record_login_failure(request, username)
+        if locked_for:
+            return templates.TemplateResponse(
+                request=request,
+                name="login.html",
+                context={
+                    "error": f"Too many failed attempts. Try again in {locked_for}s."
+                },
+                status_code=429,
+            )
         return templates.TemplateResponse(
             request=request,
             name="login.html",
             context={"error": "wrong"},
             status_code=401,
         )
+    clear_login_failures(request, username)
     request.session["user"] = username
     return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
