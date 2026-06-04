@@ -196,7 +196,7 @@ def apply_config(connection: str, config: dict[str, object]):
         message = (
             up.stderr.strip()
             or up.stdout.strip()
-            or f"saved settings, but eth0 did not activate"
+            or "saved settings, but eth0 did not activate"
         )
         raise RuntimeError(f"saved settings, but eth0 did not activate: {message}")
 
