@@ -39,7 +39,7 @@ def parse_nmcli_line(line: str):
     return fields
 
 
-def eth_connection_name() -> str:
+def eth_connection_name():
     active = run_nmcli(
         [
             "--terse",
@@ -121,7 +121,7 @@ def current_config(connection: str):
     return config
 
 
-def validate_payload(raw: object) -> dict[str, object]:
+def validate_payload(raw: object):
     if not isinstance(raw, dict):
         raise ValueError("payload must be a JSON object")
 
@@ -161,7 +161,7 @@ def validate_payload(raw: object) -> dict[str, object]:
     return payload
 
 
-def apply_config(connection: str, config: dict[str, object]) -> None:
+def apply_config(connection: str, config: dict[str, object]):
     ip_value = config.get("ip")
     prefix_value = config.get("prefix")
 
