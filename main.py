@@ -165,6 +165,16 @@ def netctl(payload):
     return result
 
 
+def change_account(payload):
+    result = subprocess.run(
+        ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/change_acct.py"],
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+    )
+    return result
+
+
 @app.get("/")
 def root():
     return RedirectResponse(url="/login")
@@ -241,6 +251,47 @@ def post_api_ip(
     return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
 
+@app.post("/api/account")
+def post_api_account(
+    request: Request,
+    current_password: Annotated[str, Form()],
+    new_username: Annotated[str, Form()] = "",
+    new_password: Annotated[str, Form()] = "",
+):
+    username = request.session.get("user")
+    if not username:
+        return RedirectResponse(url="/login", status_code=HTTP_303_SEE_OTHER)
+
+    new_username = new_username.strip()
+    if not new_username and not new_password:
+        request.session["message"] = "No account settings changed"
+        return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+    check = subprocess.run(
+        ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/auth.py"],
+        input=f"{username}\n{current_password}\n",
+        text=True,
+    )
+    if check.returncode != 0:
+        request.session["message"] = "Current password is wrong"
+        return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+    payload = {"current_username": username}
+    if new_username:
+        payload["new_username"] = new_username
+    if new_password:
+        payload["new_password"] = new_password
+
+    result = change_account(payload)
+    if result.returncode != 0:
+        request.session["message"] = result.stderr.strip() or "Account change failed"
+        return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+    request.session["user"] = new_username or username
+    request.session["message"] = result.stdout.strip() or "Account updated"
+    return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+
 @app.get("/dashboard")
 def dashboard(request: Request):
     username = request.session.get("user")
@@ -250,5 +301,9 @@ def dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
-        context={"network": get_eth0_config(), "message": message},
+        context={
+            "network": get_eth0_config(),
+            "message": message,
+            "username": username,
+        },
     )

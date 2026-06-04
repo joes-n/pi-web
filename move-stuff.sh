@@ -18,6 +18,9 @@ echo "moved auth.py to /usr/local/libexec"
 mv netctl.py /usr/local/libexec/
 echo "moved netctl.py to /usr/local/libexec"
 
+mv change_acct.py /usr/local/libexec/
+echo "moved change_acct.py to /usr/local/libexec"
+
 chown root:root /usr/local/libexec/auth.py
 echo "ran chown root:root on auth.py"
 
@@ -30,12 +33,25 @@ echo "ran chown root:root on netctl.py"
 chmod 0755 /usr/local/libexec/netctl.py
 echo "ran chmod 0755 on netctl.py"
 
+chown root:root /usr/local/libexec/change_acct.py
+echo "ran chown root:root on change_acct.py"
+
+chmod 0755 /usr/local/libexec/change_acct.py
+echo "ran chmod 0755 on change_acct.py"
+
 cat >/etc/sudoers.d/webapp-netctl <<'EOF'
 webapp ALL=(root) NOPASSWD: /usr/bin/python3 /usr/local/libexec/netctl.py
 EOF
 chmod 0440 /etc/sudoers.d/webapp-netctl
 visudo -cf /etc/sudoers.d/webapp-netctl
 echo "installed sudoers rule for netctl.py"
+
+cat >/etc/sudoers.d/webapp-change-acct <<'EOF'
+webapp ALL=(root) NOPASSWD: /usr/bin/python3 /usr/local/libexec/change_acct.py
+EOF
+chmod 0440 /etc/sudoers.d/webapp-change-acct
+visudo -cf /etc/sudoers.d/webapp-change-acct
+echo "installed sudoers rule for change_acct.py"
 
 mv webapp-in-pam /etc/pam.d/
 echo "moved webapp-in-pam (pam config file) to /etc/pam.d/"

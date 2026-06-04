@@ -23,6 +23,21 @@
         </form>
         {{ message or "no message" }}
         <br />
+        <h2>Account</h2>
+        Current user: {{ username }}
+        <form action="/api/account" method="post">
+            Current password:
+            <input type="password" name="current_password" required />
+            <br />
+            New username:
+            <input type="text" name="new_username" />
+            <br />
+            New password:
+            <input type="password" name="new_password" />
+            <br />
+            <button type="submit">Update account</button>
+        </form>
+        <br />
         <form action="/api/logout" method="post">
             <button type="submit">Sign out</button>
         </form>
