@@ -3,14 +3,15 @@ import re
 import subprocess
 import sys
 
-
 ALLOWED_KEYS = {"current_username", "new_username", "new_password"}
 USERNAME_RE = re.compile(r"^[a-z_][a-z0-9_-]{0,31}$")
 LOGIN_GROUP = "login"
 BLOCKED_USERS = {"root", "webapp"}
 
 
-def run(args: list[str], input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str], input_text: str | None = None
+) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
         args,
         input=input_text,
@@ -45,8 +46,6 @@ def validate_password(password: object) -> str:
     value = str(password)
     if "\n" in value or "\r" in value:
         raise ValueError("password cannot contain newlines")
-    if len(value) < 8:
-        raise ValueError("password must be at least 8 characters")
     return value
 
 
@@ -67,7 +66,9 @@ def validate_payload(raw: object) -> dict[str, str]:
     if unknown:
         raise ValueError(f"unknown field(s): {', '.join(sorted(unknown))}")
 
-    current_username = validate_username(raw.get("current_username", ""), "current_username")
+    current_username = validate_username(
+        raw.get("current_username", ""), "current_username"
+    )
     ensure_login_user(current_username)
 
     payload = {"current_username": current_username}
