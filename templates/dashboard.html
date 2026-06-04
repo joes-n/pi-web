@@ -9,16 +9,16 @@
         <form action="/api/ip" method="post">
             {{ network.error or "no network error"}} <br />
             Connection: {{ network.connection or "unknown" }} <br />
-            IP: {{ network.ip or "not set" }} <br />
-            New IP: <input type="text" name="ip" /> <br />
+            IP: {{ network.ip or "not set" }}
+            <input type="text" name="ip" placeolder="New IP" /> <br />
             Netmask: {{ network.netmask or "not set" }} <br />
-            Prefix: {{ network.prefix or "not set" }} <br />
-            New prefix:
+            Prefix: {{ network.prefix or "not set" }}
             <input type="number" name="prefix" min="1" max="32" /> <br />
-            Gateway: {{ network.gateway or "not set" }} <br />
-            New gateway: <input type="text" name="gateway" /> <br />
-            DNS: {{ network.dns or "not set" }} <br />
-            New DNS: <input type="text" name="dns" /><br />
+            Gateway: {{ network.gateway or "not set" }}
+            <input type="text" name="gateway" placeholder="New gateway" />
+            <br />
+            DNS: {{ network.dns or "not set" }}
+            <input type="text" name="dns" placeholder="New DNS" /><br />
             <button type="submit">Submit</button>
         </form>
         {{ message or "no message" }}
