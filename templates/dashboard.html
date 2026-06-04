@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>Dashboard</title>
+        <link rel="stylesheet" hred=""styles.css">
     </head>
     <body>
         <h1>eth0</h1>
@@ -20,7 +21,7 @@
             New DNS: <input type="text" name="dns" /><br />
             <button type="submit">Submit</button>
         </form>
-        {{ message }}
+        {{ message or "no message" }}
         <br />
         <form action="/api/logout" method="post">
             <button type="submit">Sign out</button>
