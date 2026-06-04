@@ -5,33 +5,19 @@
     </head>
     <body>
         <h1>eth0</h1>
-        {% if network.error %}
-            <p>{{ network.error }}</p>
-        {% endif %}
-        <dl>
-            <dt>Connection</dt>
-            <dd>{{ network.connection or "unknown" }}</dd>
-            <dt>IP</dt>
-            <dd>{{ network.ip or "not set" }}</dd>
-            <dt>Netmask</dt>
-            <dd>{{ network.netmask or "not set" }}</dd>
-            <dt>Prefix</dt>
-            <dd>{{ network.prefix or "not set" }}</dd>
-            <dt>Gateway</dt>
-            <dd>{{ network.gateway or "not set" }}</dd>
-            <dt>DNS</dt>
-            <dd>{{ network.dns or "not set" }}</dd>
-        </dl>
-        <br />
         <form action="/api/ip" method="post">
-            IP: <input type="text" name="ip" />
-            <br />
-            Prefix: <input type="number" name="prefix" min="1" max="32" />
-            <br />
-            Gateway: <input type="text" name="gateway" />
-            <br />
-            DNS: <input type="text" name="dns" />
-            <br />
+            {{ network.error or "no network error"}} <br />
+            Connection: {{ network.connection or "unknown" }} <br />
+            IP: {{ network.ip or "not set" }} <br />
+            New IP: <input type="text" name="ip" /> <br />
+            Netmask: {{ network.netmask or "not set" }} <br />
+            Prefix: {{ network.prefix or "not set" }} <br />
+            New prefix:
+            <input type="number" name="prefix" min="1" max="32" /> <br />
+            Gateway: {{ network.gateway or "not set" }} <br />
+            New gateway: <input type="text" name="gateway" /> <br />
+            DNS: {{ network.dns or "not set" }} <br />
+            New DNS: <input type="text" name="dns" /><br />
             <button type="submit">Submit</button>
         </form>
         {{ message }}
