@@ -4,15 +4,40 @@
         <title>Dashboard</title>
     </head>
     <body>
-        Current IP: {{ ip }}
+        <h1>eth0</h1>
+        {% if network.error %}
+            <p>{{ network.error }}</p>
+        {% endif %}
+        <dl>
+            <dt>Connection</dt>
+            <dd>{{ network.connection or "unknown" }}</dd>
+            <dt>IP</dt>
+            <dd>{{ network.ip or "not set" }}</dd>
+            <dt>Netmask</dt>
+            <dd>{{ network.netmask or "not set" }}</dd>
+            <dt>Prefix</dt>
+            <dd>{{ network.prefix or "not set" }}</dd>
+            <dt>Gateway</dt>
+            <dd>{{ network.gateway or "not set" }}</dd>
+            <dt>DNS</dt>
+            <dd>{{ network.dns or "not set" }}</dd>
+        </dl>
         <br />
         <form action="/api/ip" method="post">
-            Change IP to: <input type="text" name="new_ip" />
+            IP: <input type="text" name="ip" />
+            <br />
+            Prefix: <input type="number" name="prefix" min="1" max="32" />
+            <br />
+            Gateway: <input type="text" name="gateway" />
+            <br />
+            DNS: <input type="text" name="dns" />
+            <br />
             <button type="submit">Submit</button>
         </form>
+        {{ message }}
         <br />
         <form action="/api/logout" method="post">
-            <button type=""submit">Sign out</button>
+            <button type="submit">Sign out</button>
         </form>
     </body>
 </html>

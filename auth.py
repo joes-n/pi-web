@@ -9,7 +9,10 @@ def main():
     if len(data) != 2:
         return 1
 
-    def conversation(auth, query_list, user_data):
+    username = data[0]
+    password = data[1]
+
+    def conversation(_auth, query_list, _user_data):
         responses = []
 
         for query, query_type in query_list:
@@ -33,9 +36,6 @@ def main():
                 return None
 
         return responses
-
-    username = data[0]
-    password = data[1]
 
     try:
         p = PAM.pam()

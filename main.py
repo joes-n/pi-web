@@ -1,6 +1,6 @@
 import json
+import ipaddress
 import subprocess
-from string import Template
 from typing import Annotated
 
 from fastapi import FastAPI, Form, Request
@@ -12,14 +12,150 @@ from starlette.status import HTTP_303_SEE_OTHER
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="hi")
 templates = Jinja2Templates(directory="templates")
+ETH_DEVICE = "eth0"
+FALLBACK_CONNECTION = "netplan-eth0"
 
 
-def get_ip():
-    ip = subprocess.run(["hostname", "-I"], text=True, capture_output=True)
-    return ip.stdout
+def run_nmcli(args: list[str], check: bool = True):
+    result = subprocess.run(
+        ["nmcli", *args],
+        text=True,
+        capture_output=True,
+    )
+    if check and result.returncode != 0:
+        message = result.stderr.strip() or result.stdout.strip() or "nmcli failed"
+        raise RuntimeError(message)
+    return result
 
 
-def post_ip(payload):
+def parse_nmcli_line(line: str):
+    fields = []
+    current = []
+    escaped = False
+
+    for char in line:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == ":":
+            fields.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+
+    fields.append("".join(current))
+    return fields
+
+
+def eth_connection_name():
+    active = run_nmcli(
+        [
+            "--terse",
+            "--fields",
+            "NAME,TYPE,DEVICE",
+            "connection",
+            "show",
+            "--active",
+        ]
+    ).stdout
+
+    for line in active.splitlines():
+        fields = parse_nmcli_line(line)
+        if len(fields) == 3:
+            name, conn_type, device = fields
+            if conn_type == "802-3-ethernet" and device == ETH_DEVICE:
+                return name
+
+    all_connections = run_nmcli(
+        [
+            "--terse",
+            "--fields",
+            "NAME,TYPE,DEVICE",
+            "connection",
+            "show",
+        ]
+    ).stdout
+
+    fallback_exists = False
+    ethernet_names = []
+    for line in all_connections.splitlines():
+        fields = parse_nmcli_line(line)
+        if len(fields) != 3:
+            continue
+
+        name, conn_type, device = fields
+        if name == FALLBACK_CONNECTION:
+            fallback_exists = True
+        if conn_type == "802-3-ethernet":
+            if device == ETH_DEVICE:
+                return name
+            ethernet_names.append(name)
+
+    if fallback_exists:
+        return FALLBACK_CONNECTION
+    if len(ethernet_names) == 1:
+        return ethernet_names[0]
+
+    raise RuntimeError(f"no NetworkManager connection profile found for {ETH_DEVICE}")
+
+
+def get_connection_field(connection: str, field: str):
+    return run_nmcli(
+        ["--get-values", field, "connection", "show", connection]
+    ).stdout.strip()
+
+
+def prefix_to_netmask(prefix: int):
+    return str(ipaddress.IPv4Network(f"0.0.0.0/{prefix}").netmask)
+
+
+def split_addresses(value: str):
+    return value.replace(",", " ").split()
+
+
+def get_eth0_config():
+    config = {
+        "connection": "",
+        "ip": "",
+        "prefix": "",
+        "netmask": "",
+        "gateway": "",
+        "dns": "",
+        "error": "",
+    }
+
+    try:
+        connection = eth_connection_name()
+        config["connection"] = connection
+
+        addresses = get_connection_field(connection, "ipv4.addresses")
+        if addresses:
+            first_address = addresses.split(",", 1)[0].strip()
+            if "/" in first_address:
+                ip_value, prefix_value = first_address.rsplit("/", 1)
+                prefix = int(prefix_value)
+                config["ip"] = str(ipaddress.IPv4Address(ip_value))
+                config["prefix"] = str(prefix)
+                config["netmask"] = prefix_to_netmask(prefix)
+
+        gateway = get_connection_field(connection, "ipv4.gateway")
+        if gateway:
+            config["gateway"] = str(ipaddress.IPv4Address(gateway))
+
+        dns = get_connection_field(connection, "ipv4.dns")
+        if dns:
+            config["dns"] = ", ".join(
+                str(ipaddress.IPv4Address(value)) for value in split_addresses(dns)
+            )
+    except Exception as exc:
+        config["error"] = str(exc)
+
+    return config
+
+
+def netctl(payload):
     result = subprocess.run(
         ["sudo", "-n", "/usr/bin/python3", "/usr/local/libexec/netctl.py"],
         input=json.dumps(payload),
@@ -67,16 +203,41 @@ def post_logout(request: Request):
 
 @app.get("/api/ip")
 def get_api_ip():
-    return JSONResponse(get_ip())
+    return JSONResponse(get_eth0_config())
 
 
 @app.post("/api/ip")
-def post_api_ip(request: Request):
+def post_api_ip(
+    request: Request,
+    ip: Annotated[str, Form()] = "",
+    prefix: Annotated[str, Form()] = "",
+    gateway: Annotated[str, Form()] = "",
+    dns: Annotated[str, Form()] = "",
+):
     username = request.session.get("user")
     if not username:
         return RedirectResponse(url="/login", status_code=HTTP_303_SEE_OTHER)
 
-    post_ip(request)
+    payload = {}
+    if ip.strip():
+        payload["ip"] = ip.strip()
+    if prefix.strip():
+        payload["prefix"] = prefix.strip()
+    if gateway.strip():
+        payload["gateway"] = gateway.strip()
+    if dns.strip():
+        payload["dns"] = dns.strip()
+
+    if not payload:
+        request.session["message"] = "No network settings changed"
+        return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+
+    result = netctl(payload)
+
+    if result.returncode != 0:
+        request.session["message"] = result.stderr.strip() or "Network change failed"
+        return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
+    request.session["message"] = result.stdout.strip() or "Network settings updated"
     return RedirectResponse(url="/dashboard", status_code=HTTP_303_SEE_OTHER)
 
 
@@ -85,7 +246,9 @@ def dashboard(request: Request):
     username = request.session.get("user")
     if not username:
         return RedirectResponse(url="/login")
-
+    message = request.session.pop("message", None)
     return templates.TemplateResponse(
-        request=request, name="dashboard.html", context={"ip": get_ip()}
+        request=request,
+        name="dashboard.html",
+        context={"network": get_eth0_config(), "message": message},
     )
