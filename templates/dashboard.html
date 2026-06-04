@@ -10,7 +10,7 @@
             {{ network.error or "no network error"}} <br />
             Connection: {{ network.connection or "unknown" }} <br />
             IP: {{ network.ip or "not set" }}
-            <input type="text" name="ip" placeolder="New IP" /> <br />
+            <input type="text" name="ip" placeholder="New IP" /> <br />
             Netmask: {{ network.netmask or "not set" }} <br />
             Prefix: {{ network.prefix or "not set" }}
             <input type="number" name="prefix" min="1" max="32" /> <br />
